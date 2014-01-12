@@ -33,9 +33,9 @@ class Severs
 		for($i=0;$i<$res->num_rows;$i++)
 		{
 			$row = $res->fetch_assoc();
-			$this->severList[$i] = $row['shost'];
-			$this->severList[$i] = $row['sport'];
-			$this->severList[$i] = $row['shash'];
+			$this->severList[$i]['shost'] = $row['shost'];
+			$this->severList[$i]['sport'] = (int)$row['sport'];
+			$this->severList[$i]['shash'] = (int)$row['shash'];
 		}
 		return $this->severList;
 	}
