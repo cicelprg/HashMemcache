@@ -4,7 +4,7 @@
  * @author prg
  * @copyright 2014 
  */
-require_once '../base/mysql.class.php';
+require_once $GLOBALS['memcached_path'].'/base/mysql.class.php';
 class Skey
 {
 	/**
@@ -25,11 +25,16 @@ class Skey
 	 */
 	function addServerkey($data =array())
 	{
+		//var_dump($data);
+		if($this->CheckTheKey($data))
+		{
+			return true;
+		}
 		if(is_array($data))
 		{
 			$query = "insert into t_skey(sid,skey) values(?,?)";
 			$stmt  = BaseMysql::$db->prepare($query);
-			$stmt->bind_param("ii",(int)$data[0],(int)$data[1]);
+			$stmt->bind_param("ii",$data['sid'],$data['skey']);
 			if($stmt->execute())
 			{
 				return true;
@@ -62,16 +67,55 @@ class Skey
 	 */
 	function deleteKeysBySid($sid)
 	{
-		$query = "delete from t_skey where sid=?";
-		$stmt  = BaseMysql::$db->prepare($query);
-		$stmt->bind_param("i",(int)$sid);
-		if($stmt->execute())
+		//var_dump($sid);
+		$query = "delete from t_skey where sid =".$sid;
+		$res   = BaseMysql::$db->query($query);
+		if($res)
 		{
 			return true;
 		}
 		return false;
+			
 	}
 	
+	/**
+	 * 检查key值实在此服务器上已经保存过了
+	 * @param array $data
+	 * @return boolean
+	 */
+	function CheckTheKey($data =array())
+	{
+		if(is_array($data))
+		{
+			$query = "select kid from t_skey where sid=".$data['sid']." and skey=".$data['skey'];
+			$res   = BaseMysql::$db->query($query);
+			if($res->num_rows>0)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+	}
+	
+	/**
+	 * 数据转存后批量增加 
+	 * @param  $keys
+	 * @param  $sid
+	 */
+	function addTransKeys($keys,$sid)
+	{
+		if(is_array($keys))
+		{
+			foreach($keys as $key)
+			{
+				$query = "insert into t_skey(sid,skey) values($sid,$key)";
+				BaseMysql::$db->query($query);
+			}
+		}
+	}
 	function __destruct()
 	{
 		BaseMysql::close();
