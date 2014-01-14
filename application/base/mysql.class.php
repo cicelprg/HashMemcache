@@ -4,7 +4,6 @@
  * @author prg
  * @copyright 2014
  */
-require_once '../config/config.php';
 class BaseMysql
 {
 	/**
@@ -30,7 +29,7 @@ class BaseMysql
 	{
 		if(isset(self::$db))
 		{
-			self::$db->close();
+			@self::$db->close();
 		}
 	}
 }

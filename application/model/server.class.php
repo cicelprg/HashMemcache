@@ -5,7 +5,7 @@
  * @copyright 2014
  * @uses mysql.class.php
  */
-require_once '../base/mysql.class.php';
+require_once $GLOBALS['memcached_path'].'/base/mysql.class.php';
 class Severs
 {
 	/**
@@ -28,11 +28,12 @@ class Severs
 	 */
 	function getAllServers()
 	{
-		$query = 'select * from t_severs';
+		$query = 'select * from '.$GLOBALS['t_server'];
 		$res   = BaseMysql::$db->query($query);
 		for($i=0;$i<$res->num_rows;$i++)
 		{
 			$row = $res->fetch_assoc();
+			$this->severList[$i]['sid']   = (int)$row['sid'];
 			$this->severList[$i]['shost'] = $row['shost'];
 			$this->severList[$i]['sport'] = (int)$row['sport'];
 			$this->severList[$i]['shash'] = (int)$row['shash'];
@@ -47,12 +48,16 @@ class Severs
 	 */
 	function addSever($data = array())
 	{
-		$query = "insert into t_severs(shost,sport,shash) values(?,?,?)";
+		if($this->checkServerExist($data))
+		{
+			return -1;
+		}
+		$query = "insert into ".$GLOBALS['t_server']."(shost,sport,shash) values(?,?,?)";
 		$stmt  = BaseMysql::$db->prepare($query);
 		$stmt->bind_param("sii",$data['shost'],$data['sport'],$data['shash']);
 		if($stmt->execute())
 		{
-			return true;
+			return $stmt->insert_id;
 		}
 		return false;
 	}
@@ -64,16 +69,26 @@ class Severs
 	 */
 	function removeSever($id)
 	{
-		$query = "delete from t_severs where sid= ?";
-		$stmt  = BaseMysql::$db->prepare($query);
-		$stmt->bind_param("i",(int)$id);
-		if($stmt->execute())
+		//var_dump($id);
+		$query = "delete from ".$GLOBALS['t_server']." where sid=".$id;
+		$res   = BaseMysql::$db->query($query);
+		if($res)
 		{
 			return true;
 		}
 		return false;
 	}
 	
+	function checkServerExist($server=array())
+	{
+		$query = "select * from ".$GLOBALS['t_server']." where shash=".$server['shash'];
+		$res = BaseMysql::$db->query($query);
+		if($res->num_rows>0)
+		{
+			return true;
+		}
+		return false;		
+	}
 	/**
 	 * 断开mysql
 	 */
